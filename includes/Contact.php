@@ -55,7 +55,7 @@ class Contact {
     // Delete message
     public function delete($id) {
         $stmt = $this->db->execute('DELETE FROM contact_messages WHERE id = ?', [$id]);
-        return $stmt ? true : false;
+        return (bool) $stmt;
     }
 
     // Get unread count

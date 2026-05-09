@@ -1,0 +1,26 @@
+# EduTech — Apache (XAMPP / typical cPanel). Adjust RewriteBase if the app is not at domain root.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Subdirectory install (e.g. http://localhost/edutech/): uncomment next line and fix path
+    # RewriteBase /edutech/
+
+    # Route bare directory to index
+    DirectoryIndex index.php
+
+    # Optional: block direct access to sensitive paths (adjust if you serve assets differently)
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^vendor/ - [F,L]
+</IfModule>
+
+# Security headers (skipped if mod_headers unavailable)
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+<FilesMatch "\.(sql|lock)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>

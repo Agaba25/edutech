@@ -120,6 +120,9 @@ $institutions = $institution_model->getAll();
                                 <option value="">Select Level</option>
                                 <option value="Certificate" <?php echo $program && $program['level'] === 'Certificate' ? 'selected' : ''; ?>>Certificate</option>
                                 <option value="Diploma" <?php echo $program && $program['level'] === 'Diploma' ? 'selected' : ''; ?>>Diploma</option>
+                                <option value="Bachelor" <?php echo $program && $program['level'] === 'Bachelor' ? 'selected' : ''; ?>>Bachelor</option>
+                                <option value="Master" <?php echo $program && $program['level'] === 'Master' ? 'selected' : ''; ?>>Master</option>
+                                <option value="PhD" <?php echo $program && $program['level'] === 'PhD' ? 'selected' : ''; ?>>PhD</option>
                             </select>
                         </div>
                         <div class="mb-3">

@@ -27,6 +27,18 @@ class Sanitizer {
         return filter_var($url, FILTER_VALIDATE_URL) !== false;
     }
 
+    /** Prefix scheme when institutions store bare domains (e.g. www.example.ac.ug). */
+    public static function formatWebsiteUrl($url) {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return '';
+        }
+        if (preg_match('#^https?://#i', $url)) {
+            return $url;
+        }
+        return 'https://' . $url;
+    }
+
     // Remove special characters
     public static function removeSpecialChars($input) {
         return preg_replace('/[^a-zA-Z0-9\s]/', '', $input);

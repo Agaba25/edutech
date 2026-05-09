@@ -73,30 +73,12 @@ class Institution {
 
     // Create institution
     public function create($data) {
-        $query = 'INSERT INTO institutions (name, short_description, address, region, logo_path, contact_email, phone, website) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        
+        $query = 'INSERT INTO institutions (name, short_name, short_description, address, region, logo_path, contact_email, phone, website)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
         $stmt = $this->db->execute($query, [
             $data['name'],
-            $data['short_description'] ?? null,
-            $data['address'] ?? null,
-            $data['region'] ?? null,
-            $data['logo_path'] ?? null,
-            $data['contact_email'] ?? null,
-            $data['phone'] ?? null,
-            $data['website'] ?? null
-        ]);
-
-        return $stmt ? $this->db->lastInsertId() : false;
-    }
-
-    // Update institution
-    public function update($id, $data) {
-        $query = 'UPDATE institutions SET name = ?, short_description = ?, address = ?, region = ?, 
-                  logo_path = ?, contact_email = ?, phone = ?, website = ? WHERE id = ?';
-        
-        $stmt = $this->db->execute($query, [
-            $data['name'],
+            $data['short_name'] ?? null,
             $data['short_description'] ?? null,
             $data['address'] ?? null,
             $data['region'] ?? null,
@@ -104,16 +86,36 @@ class Institution {
             $data['contact_email'] ?? null,
             $data['phone'] ?? null,
             $data['website'] ?? null,
-            $id
         ]);
 
-        return $stmt ? true : false;
+        return $stmt ? $this->db->lastInsertId() : false;
+    }
+
+    // Update institution
+    public function update($id, $data) {
+        $query = 'UPDATE institutions SET name = ?, short_name = ?, short_description = ?, address = ?, region = ?,
+                  logo_path = ?, contact_email = ?, phone = ?, website = ? WHERE id = ?';
+
+        $stmt = $this->db->execute($query, [
+            $data['name'],
+            $data['short_name'] ?? null,
+            $data['short_description'] ?? null,
+            $data['address'] ?? null,
+            $data['region'] ?? null,
+            $data['logo_path'] ?? null,
+            $data['contact_email'] ?? null,
+            $data['phone'] ?? null,
+            $data['website'] ?? null,
+            $id,
+        ]);
+
+        return (bool) $stmt;
     }
 
     // Delete institution
     public function delete($id) {
         $stmt = $this->db->execute('DELETE FROM institutions WHERE id = ?', [$id]);
-        return $stmt ? true : false;
+        return (bool) $stmt;
     }
 }
 ?>

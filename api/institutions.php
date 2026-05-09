@@ -96,7 +96,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => APP_ENV === 'development' ? 'Server error: ' . $e->getMessage() : 'Internal server error'
+        'message' => Config::isDevelopment() ? 'Server error: ' . $e->getMessage() : 'Internal server error'
     ]);
 }
 ?>

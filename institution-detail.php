@@ -61,9 +61,12 @@ $programs = $program_model->getByInstitution($id);
                     <?php else: ?>
                     <ul class="list-group list-group-flush">
                         <?php foreach ($programs as $prog): ?>
-                        <li class="list-group-item">
-                            <strong><?php echo Sanitizer::escape($prog['name']); ?></strong><br>
-                            <small class="text-muted">Level: <?php echo Sanitizer::escape($prog['level']); ?> | Duration: <?php echo Sanitizer::escape($prog['duration']); ?></small>
+                        <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <strong><?php echo Sanitizer::escape($prog['name']); ?></strong><br>
+                                <small class="text-muted">Level: <?php echo Sanitizer::escape($prog['level']); ?> | Duration: <?php echo Sanitizer::escape($prog['duration']); ?></small>
+                            </div>
+                            <a href="program-detail.php?id=<?php echo (int) $prog['id']; ?>" class="btn btn-sm btn-outline-primary shrink-0">Details</a>
                         </li>
                         <?php endforeach; ?>
                     </ul>

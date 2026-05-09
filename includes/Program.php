@@ -1,6 +1,6 @@
 <?php
 /**
- * Program Model Class
+ * Program Model Class (tables: programs, subject_combinations)
  */
 
 class Program {
@@ -10,12 +10,14 @@ class Program {
         $this->db = Database::getInstance();
     }
 
-    // Get all programs
     public function getAll() {
-        return $this->db->fetchAll('SELECT * FROM programs ORDER BY name ASC');
+        return $this->db->fetchAll(
+            'SELECT p.*, i.name AS institution_name FROM programs p
+             INNER JOIN institutions i ON p.institution_id = i.id
+             ORDER BY p.name ASC'
+        );
     }
 
-    // Get program by ID
     public function getById($id) {
         return $this->db->fetchOne(
             'SELECT * FROM programs WHERE id = ?',
@@ -23,70 +25,72 @@ class Program {
         );
     }
 
-    // Get programs by institution
+    /**
+     * Program row joined with owning institution (detail pages).
+     */
+    public function getByIdWithInstitution($id) {
+        return $this->db->fetchOne(
+            'SELECT p.*, i.name AS institution_name, i.short_name AS institution_short_name,
+                    i.website, i.contact_email, i.phone, i.region, i.address
+             FROM programs p
+             INNER JOIN institutions i ON p.institution_id = i.id
+             WHERE p.id = ?',
+            [$id]
+        );
+    }
+
+    public function getSubjectCombinations($program_id) {
+        return $this->db->fetchAll(
+            'SELECT * FROM subject_combinations WHERE program_id = ? ORDER BY combination_code ASC',
+            [$program_id]
+        );
+    }
+
     public function getByInstitution($institution_id) {
         return $this->db->fetchAll(
-            'SELECT * FROM programs WHERE institution_id = ? ORDER BY level, name ASC',
+            'SELECT p.*, i.name AS institution_name FROM programs p
+             INNER JOIN institutions i ON p.institution_id = i.id
+             WHERE p.institution_id = ?
+             ORDER BY p.level, p.name ASC',
             [$institution_id]
         );
     }
 
-    // Get programs by level
     public function getByLevel($level, $limit = null, $offset = 0) {
-        $query = 'SELECT p.*, i.name as institution_name FROM programs p 
-                  JOIN institutions i ON p.institution_id = i.id 
+        $query = 'SELECT p.*, i.name AS institution_name FROM programs p
+                  INNER JOIN institutions i ON p.institution_id = i.id
                   WHERE p.level = ? ORDER BY p.name ASC';
         $params = [$level];
-        
-        if ($limit) {
+
+        if ($limit !== null && $limit !== '') {
             $query .= ' LIMIT ? OFFSET ?';
-            $params[] = $limit;
-            $params[] = $offset;
+            $params[] = (int) $limit;
+            $params[] = (int) $offset;
         }
-        
+
         return $this->db->fetchAll($query, $params);
     }
 
-    // Search programs
     public function search($keyword, $limit = null, $offset = 0) {
-        $query = 'SELECT p.*, i.name as institution_name FROM programs p 
-                  JOIN institutions i ON p.institution_id = i.id 
-                  WHERE p.name LIKE ? OR p.description LIKE ? 
+        $query = 'SELECT p.*, i.name AS institution_name FROM programs p
+                  INNER JOIN institutions i ON p.institution_id = i.id
+                  WHERE p.name LIKE ? OR p.description LIKE ?
                   ORDER BY p.name ASC';
         $params = ['%' . $keyword . '%', '%' . $keyword . '%'];
-        
-        if ($limit) {
+
+        if ($limit !== null && $limit !== '') {
             $query .= ' LIMIT ? OFFSET ?';
-            $params[] = $limit;
-            $params[] = $offset;
+            $params[] = (int) $limit;
+            $params[] = (int) $offset;
         }
-        
+
         return $this->db->fetchAll($query, $params);
     }
 
-    // Create program
     public function create($data) {
-        $query = 'INSERT INTO programs (institution_id, level, name, duration, fee_estimate, cutoff_info, description) 
+        $query = 'INSERT INTO programs (institution_id, level, name, duration, fee_estimate, cutoff_info, description)
                   VALUES (?, ?, ?, ?, ?, ?, ?)';
-        
-        $stmt = $this->db->execute($query, [
-            $data['institution_id'],
-            $data['level'],
-            $data['name'],
-            $data['duration'] ?? null,
-            $data['fee_estimate'] ?? null,
-            $data['cutoff_info'] ?? null,
-            $data['description'] ?? null
-        ]);
 
-        return $stmt ? $this->db->lastInsertId() : false;
-    }
-
-    // Update program
-    public function update($id, $data) {
-        $query = 'UPDATE programs SET institution_id = ?, level = ?, name = ?, duration = ?, 
-                  fee_estimate = ?, cutoff_info = ?, description = ? WHERE id = ?';
-        
         $stmt = $this->db->execute($query, [
             $data['institution_id'],
             $data['level'],
@@ -95,16 +99,32 @@ class Program {
             $data['fee_estimate'] ?? null,
             $data['cutoff_info'] ?? null,
             $data['description'] ?? null,
-            $id
         ]);
 
-        return $stmt ? true : false;
+        return $stmt ? $this->db->lastInsertId() : false;
     }
 
-    // Delete program
+    public function update($id, $data) {
+        $query = 'UPDATE programs SET institution_id = ?, level = ?, name = ?, duration = ?,
+                  fee_estimate = ?, cutoff_info = ?, description = ? WHERE id = ?';
+
+        $stmt = $this->db->execute($query, [
+            $data['institution_id'],
+            $data['level'],
+            $data['name'],
+            $data['duration'] ?? null,
+            $data['fee_estimate'] ?? null,
+            $data['cutoff_info'] ?? null,
+            $data['description'] ?? null,
+            $id,
+        ]);
+
+        return (bool) $stmt;
+    }
+
     public function delete($id) {
         $stmt = $this->db->execute('DELETE FROM programs WHERE id = ?', [$id]);
-        return $stmt ? true : false;
+        return (bool) $stmt;
     }
 }
-?>
+

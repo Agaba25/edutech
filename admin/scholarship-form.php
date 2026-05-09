@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         if ($is_edit) {
-            if ($scholarship_model->updateScholarship($id, $title, $amount, $description, $requirements, $deadline, $application_url)) {
+            if ($scholarship_model->updateScholarship($id, $institution_id, $title, $amount, $description, $requirements, $deadline, $application_url)) {
                 $message = 'Scholarship updated successfully.';
                 $message_type = 'success';
                 $scholarship = $scholarship_model->getScholarshipById($id);

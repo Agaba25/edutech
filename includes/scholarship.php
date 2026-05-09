@@ -1,73 +1,68 @@
 <?php
 class Scholarship {
     private $db;
-    
+
     public function __construct() {
         $this->db = Database::getInstance();
     }
-    
+
     public function getAllScholarships() {
-        $query = "SELECT s.*, i.name as institution_name FROM scholarships s 
-                  LEFT JOIN institutions i ON s.institution_id = i.id 
-                  ORDER BY s.deadline DESC";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        return $this->db->fetchAll(
+            'SELECT s.*, i.name AS institution_name FROM scholarships s
+             LEFT JOIN institutions i ON s.institution_id = i.id
+             ORDER BY s.deadline DESC'
+        );
     }
-    
+
     public function getActiveScholarships() {
         $today = date('Y-m-d');
-        $query = "SELECT s.*, i.name as institution_name FROM scholarships s 
-                  LEFT JOIN institutions i ON s.institution_id = i.id 
-                  WHERE s.deadline >= ? 
-                  ORDER BY s.deadline ASC";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('s', $today);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        return $this->db->fetchAll(
+            'SELECT s.*, i.name AS institution_name FROM scholarships s
+             LEFT JOIN institutions i ON s.institution_id = i.id
+             WHERE s.deadline >= ?
+             ORDER BY s.deadline ASC',
+            [$today]
+        );
     }
-    
+
     public function getScholarshipById($id) {
-        $query = "SELECT s.*, i.name as institution_name FROM scholarships s 
-                  LEFT JOIN institutions i ON s.institution_id = i.id WHERE s.id = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_assoc();
+        return $this->db->fetchOne(
+            'SELECT s.*, i.name AS institution_name FROM scholarships s
+             LEFT JOIN institutions i ON s.institution_id = i.id WHERE s.id = ?',
+            [$id]
+        );
     }
-    
+
     public function addScholarship($institution_id, $title, $amount, $description, $requirements, $deadline, $application_url) {
-        $query = "INSERT INTO scholarships (institution_id, title, amount, description, requirements, deadline, application_url) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('issssss', $institution_id, $title, $amount, $description, $requirements, $deadline, $application_url);
-        return $stmt->execute();
+        $stmt = $this->db->execute(
+            'INSERT INTO scholarships (institution_id, title, amount, description, requirements, deadline, application_url)
+             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [$institution_id, $title, $amount, $description, $requirements, $deadline, $application_url]
+        );
+        return (bool) $stmt;
     }
-    
-    public function updateScholarship($id, $title, $amount, $description, $requirements, $deadline, $application_url) {
-        $query = "UPDATE scholarships SET title = ?, amount = ?, description = ?, requirements = ?, deadline = ?, application_url = ? WHERE id = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('ssssssi', $title, $amount, $description, $requirements, $deadline, $application_url, $id);
-        return $stmt->execute();
+
+    public function updateScholarship($id, $institution_id, $title, $amount, $description, $requirements, $deadline, $application_url) {
+        $stmt = $this->db->execute(
+            'UPDATE scholarships SET institution_id = ?, title = ?, amount = ?, description = ?, requirements = ?, deadline = ?, application_url = ? WHERE id = ?',
+            [$institution_id, $title, $amount, $description, $requirements, $deadline, $application_url, $id]
+        );
+        return (bool) $stmt;
     }
-    
+
     public function deleteScholarship($id) {
-        $query = "DELETE FROM scholarships WHERE id = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('i', $id);
-        return $stmt->execute();
+        $stmt = $this->db->execute('DELETE FROM scholarships WHERE id = ?', [$id]);
+        return (bool) $stmt;
     }
-    
+
     public function searchScholarships($search_term) {
-        $search = "%$search_term%";
-        $query = "SELECT s.*, i.name as institution_name FROM scholarships s 
-                  LEFT JOIN institutions i ON s.institution_id = i.id 
-                  WHERE s.title LIKE ? OR s.description LIKE ? OR i.name LIKE ?
-                  ORDER BY s.deadline DESC";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('sss', $search, $search, $search);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $search = '%' . $search_term . '%';
+        return $this->db->fetchAll(
+            'SELECT s.*, i.name AS institution_name FROM scholarships s
+             LEFT JOIN institutions i ON s.institution_id = i.id
+             WHERE s.title LIKE ? OR s.description LIKE ? OR i.name LIKE ?
+             ORDER BY s.deadline DESC',
+            [$search, $search, $search]
+        );
     }
 }
-?>

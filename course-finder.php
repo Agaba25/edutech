@@ -1,12 +1,6 @@
 <?php
 $page_title = 'Course Finder';
-require_once 'config.php';
-require_once 'includes/header.php';
-require_once 'includes/Program.php';
-require_once 'includes/Institution.php';
-require_once 'includes/Database.php';
-
-$db = Database::getInstance();
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <style>

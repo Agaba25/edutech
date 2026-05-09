@@ -1,8 +1,5 @@
 <?php
 $page_title = 'Home';
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/Institution.php';
-require_once __DIR__ . '/includes/Program.php';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -153,7 +150,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title"><?php echo Sanitizer::escape($inst['name']); ?></h5>
-                    <p class="card-text text-muted"><?php echo Sanitizer::escape(substr($inst['short_description'], 0, 100)); ?>...</p>
+                    <p class="card-text text-muted"><?php echo Sanitizer::escape(substr((string) ($inst['short_description'] ?? ''), 0, 100)); ?><?php echo strlen((string) ($inst['short_description'] ?? '')) > 100 ? '...' : ''; ?></p>
                     <p class="card-text"><small class="text-info">📍 <?php echo Sanitizer::escape($inst['region']); ?></small></p>
                 </div>
                 <div class="card-footer bg-white">

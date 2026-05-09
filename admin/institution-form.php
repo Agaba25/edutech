@@ -43,8 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please provide a valid email address.';
     }
     
-    if (!empty($data['website']) && !filter_var($data['website'], FILTER_VALIDATE_URL)) {
-        $errors[] = 'Please provide a valid website URL.';
+    if (!empty($data['website'])) {
+        $webCheck = Sanitizer::formatWebsiteUrl($data['website']);
+        if (!filter_var($webCheck, FILTER_VALIDATE_URL)) {
+            $errors[] = 'Please provide a valid website URL (domain or full https:// link).';
+        }
     }
     
     if (!empty($data['phone']) && !preg_match('/^[\+]?[0-9\s\-\(\)]+$/', $data['phone'])) {

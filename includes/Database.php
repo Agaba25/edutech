@@ -1,28 +1,38 @@
 <?php
 /**
- * Database Connection Class
- * Handles all database operations with prepared statements
+ * Database access via PDO (shared hosting friendly).
  */
 
 class Database {
-    private $connection;
+    private $pdo;
     private static $instance = null;
+    /** @var PDOStatement|null */
+    private $lastStatement = null;
 
     private function __construct() {
+        $port = defined('DB_PORT') ? DB_PORT : '3306';
+        $dsn = sprintf(
+            'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+            DB_HOST,
+            $port,
+            DB_NAME
+        );
+        $opts = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ];
         try {
-            $this->connection = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-            
-            if ($this->connection->connect_error) {
-                throw new Exception('Database connection failed: ' . $this->connection->connect_error);
+            $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $opts);
+        } catch (PDOException $e) {
+            error_log('Database connection failed: ' . $e->getMessage());
+            if (class_exists('Config') && Config::isDevelopment()) {
+                die('Database connection failed: ' . htmlspecialchars($e->getMessage()));
             }
-            
-            $this->connection->set_charset('utf8mb4');
-        } catch (Exception $e) {
-            die('Connection Error: ' . $e->getMessage());
+            die('Database connection failed. Please try again later.');
         }
     }
 
-    // Singleton pattern to prevent multiple connections
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -30,93 +40,58 @@ class Database {
         return self::$instance;
     }
 
-    // Prevent cloning
     private function __clone() {}
 
-    // Get connection
+    /** @return PDO */
     public function getConnection() {
-        return $this->connection;
+        return $this->pdo;
     }
 
-    // Execute prepared statement
-    public function execute($query, $params = [], $types = '') {
+    /**
+     * @param string $query
+     * @param array $params
+     * @return PDOStatement|false
+     */
+    public function execute($query, $params = []) {
         try {
-            $stmt = $this->connection->prepare($query);
-            
-            if (!$stmt) {
-                throw new Exception('Prepare failed: ' . $this->connection->error);
-            }
-            
-            if (!empty($params)) {
-                if (empty($types)) {
-                    // Auto-detect types
-                    $types = '';
-                    foreach ($params as $param) {
-                        if (is_int($param)) {
-                            $types .= 'i';
-                        } elseif (is_float($param)) {
-                            $types .= 'd';
-                        } else {
-                            $types .= 's';
-                        }
-                    }
-                }
-                $stmt->bind_param($types, ...$params);
-            }
-            
-            if (!$stmt->execute()) {
-                throw new Exception('Execute failed: ' . $stmt->error);
-            }
-            
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+            $this->lastStatement = $stmt;
             return $stmt;
-        } catch (Exception $e) {
+        } catch (PDOException $e) {
             error_log('Database Error: ' . $e->getMessage());
+            $this->lastStatement = null;
             return false;
         }
     }
 
-    // Fetch single row
     public function fetchOne($query, $params = []) {
         $stmt = $this->execute($query, $params);
-        if (!$stmt) return null;
-        
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        $stmt->close();
-        
-        return $row;
+        if (!$stmt) {
+            return null;
+        }
+        $row = $stmt->fetch();
+        return $row ?: null;
     }
 
-    // Fetch all rows
     public function fetchAll($query, $params = []) {
         $stmt = $this->execute($query, $params);
-        if (!$stmt) return [];
-        
-        $result = $stmt->get_result();
-        $rows = [];
-        while ($row = $result->fetch_assoc()) {
-            $rows[] = $row;
+        if (!$stmt) {
+            return [];
         }
-        $stmt->close();
-        
-        return $rows;
+        return $stmt->fetchAll();
     }
 
-    // Get last insert ID
     public function lastInsertId() {
-        return $this->connection->insert_id;
+        return $this->pdo->lastInsertId();
     }
 
-    // Get affected rows
     public function affectedRows() {
-        return $this->connection->affected_rows;
+        return $this->lastStatement ? $this->lastStatement->rowCount() : 0;
     }
 
-    // Close connection
     public function close() {
-        if ($this->connection) {
-            $this->connection->close();
-        }
+        $this->pdo = null;
+        self::$instance = null;
     }
 }
-?>
